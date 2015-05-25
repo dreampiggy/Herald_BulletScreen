@@ -1,5 +1,4 @@
 var request = require('superagent');
-var async = require('async');
 var events = require("events");
 var WebSocket = require('ws');
 var connection = require('./config');
