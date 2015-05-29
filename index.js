@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.post('/', handler.acceptBullet);
 
 app.use(function(req, res) {
-	res.end('404 not found');
+	res,status(404).end();
 });
 
 app.listen(8080);

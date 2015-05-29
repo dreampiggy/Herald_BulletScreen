@@ -12,17 +12,20 @@ var emitter = new events.EventEmitter();
 		console.log('WebSocket start!');
 
 		var sendBullet = function(bullet){
-			ws.send(JSON.stringify(bullet));//加入判断
+			var sendJSON = [bullet];
+			ws.send(JSON.stringify(sendJSON));//加入判断
 		};
 
 		emitter.addListener('bullet come',sendBullet);//加入对字幕请求的监听器
 
-		var uuid = '0000000000000000';
+		var uuid = '0000000000000001';
 
-		getBullet(uuid,function(results){
-			if (results){
-				ws.send(JSON.stringify(results));
-			}
+		getTime(uuid,function(time){
+			getBullet(time,function(results){
+				if (results){
+					ws.send(JSON.stringify(results));
+				}
+			});
 		});
 
 		ws.on('message', function incoming(message) {
@@ -31,8 +34,7 @@ var emitter = new events.EventEmitter();
 
 		ws.on('close', function close(){
 			emitter.removeListener('bullet come',sendBullet);//取消监听器
-			var time = new Date().getTime();
-			saveTime(uuid,time);
+			saveTime(uuid);
 		})
 	});
 })();
@@ -108,14 +110,14 @@ function saveBullet (bullet) {
 }
 
 function getBullet (time,callback){
-	var query = connection.query('SELECT time,movieid,content,studentNum FROM bullet WHERE time > ?',
-		[time],
+	var query = connection.query('SELECT time,movieid,content,studentNum FROM bullet WHERE time > ? ORDER BY id DESC LIMIT 10',
+		[time],//最多会取最近的10条
 		function(err,results){
 		if (err){
 			console.log(err);
 			callback(null);
 		}
-		else if (!results){
+		else if (!results || results.length == 0){
 			callback(null);
 		}
 		else{
@@ -125,7 +127,8 @@ function getBullet (time,callback){
 	});
 }
 
-function saveTime (uuid,time){
+function saveTime (uuid){
+	var time = Math.round(new Date().getTime()/1000);
 	var query = connection.query('INSERT INTO user SET uuid = ?,time = ? ON DUPLICATE KEY UPDATE uuid = ?,time = ?',
 		[uuid,time,uuid,time],
 		function(err,results){
@@ -138,5 +141,21 @@ function saveTime (uuid,time){
 	});
 }
 
+function getTime (uuid,callback){
+	var time = Math.round(new Date().getTime()/1000);
+	var query = connection.query('SELECT time FROM user WHERE uuid = ?',
+		[uuid],
+		function(err,results){
+		if (err){
+			callback(time);
+		}
+		else if (!results || results.length == 0){
+			callback(time);
+		}
+		else{
+			callback(results[0]['time']);
+		}
+	});
+}
 
 exports.acceptBullet = acceptBullet;
