@@ -11,19 +11,31 @@ var emitter = new events.EventEmitter();
 	wss.on('connection', function connection(ws) {
 		console.log('WebSocket start!');
 
-		ws.on('open', function open() {
-		  ws.send('ok');
+		var sendBullet = function(bullet){
+			ws.send(JSON.stringify(bullet));//加入判断
+		};
+
+		emitter.addListener('bullet come',sendBullet);//加入对字幕请求的监听器
+
+		var uuid = '0000000000000000';
+
+		getBullet(uuid,function(results){
+			if (results){
+				ws.send(JSON.stringify(results));
+			}
 		});
 
 		ws.on('message', function incoming(message) {
-		  //
+			//保留，比如可以发送过来你的uuid来识别用户
 		});
 
-		emitter.on('bullet come',function(bullet){
-			ws.send(JSON.stringify(bullet));//加入判断
+		ws.on('close', function close(){
+			emitter.removeListener('bullet come',sendBullet);//取消监听器
+			var time = new Date().getTime();
+			saveTime(uuid,time);
 		})
 	});
-}());
+})();
 
 function acceptBullet(req,res){
 	if (!req.body){
@@ -31,7 +43,7 @@ function acceptBullet(req,res){
 		return;
 	}
 
-	var bullet = getBullet(req.body);
+	var bullet = checkBullet(req.body);
 
 	console.log(req.body);
 
@@ -47,7 +59,7 @@ function acceptBullet(req,res){
 	emitter.emit('bullet come',bullet);
 }
 
-function getBullet (results){
+function checkBullet (results){
 	var bullet = {
 		time: '',
 		movieid: '000000001',//保留字，视频ID，暂时定义为000000001
@@ -89,14 +101,42 @@ function saveBullet (bullet) {
 		if (err){
 			console.log(err);
 		}
-		else if (!results){
-			//
-		}
 		else{
-			//
+			return true;//ok
 		}
 	});
-	return;
 }
+
+function getBullet (time,callback){
+	var query = connection.query('SELECT time,movieid,content,studentNum FROM bullet WHERE time > ?',
+		[time],
+		function(err,results){
+		if (err){
+			console.log(err);
+			callback(null);
+		}
+		else if (!results){
+			callback(null);
+		}
+		else{
+			console.log(results);
+			callback(results);
+		}
+	});
+}
+
+function saveTime (uuid,time){
+	var query = connection.query('INSERT INTO user SET uuid = ?,time = ? ON DUPLICATE KEY UPDATE uuid = ?,time = ?',
+		[uuid,time,uuid,time],
+		function(err,results){
+		if (err){
+			console.log(err);
+		}
+		else{
+			return true;//ok
+		}
+	});
+}
+
 
 exports.acceptBullet = acceptBullet;
