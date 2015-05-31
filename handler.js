@@ -7,6 +7,9 @@ var WebSocketServer = WebSocket.Server
 var wss = new WebSocketServer({ port: 3000 });
 var emitter = new events.EventEmitter();
 
+var MOVIE_ID = '000000001';
+var UUID = '0000000000000001';
+
 (function websocket(){
 	wss.on('connection', function connection(ws) {
 		console.log('WebSocket start!');
@@ -18,7 +21,7 @@ var emitter = new events.EventEmitter();
 
 		emitter.addListener('bullet come',sendBullet);//加入对字幕请求的监听器
 
-		var uuid = '0000000000000001';
+		var uuid = UUID;
 
 		getTime(uuid,function(time){
 			getBullet(time,function(results){
@@ -38,6 +41,52 @@ var emitter = new events.EventEmitter();
 		})
 	});
 })();
+
+
+function getLuck (req,res) {
+	if (!req.body){
+		res.status(403).end();
+		return;
+	}
+	var movieid = checkLuck(req.body['movieid']);
+
+	if (movieid){
+		getRandomID(function(result){
+			res.end(result);//发送抽奖结果
+		})
+	}
+	else{
+		res.status(403).end();
+		return;
+	}
+}
+
+function checkLuck (movieid) {
+	if (movieid == MOVIE_ID){//保留字，视频ID，暂时定义为000000001
+		return movieid;
+	}
+	else{
+		return null;
+	}
+}
+
+function getRandomID(callback){
+	connection.query('SELECT * FROM user ORDER BY RAND() LIMIT 1',//参与人数不超过全校人数，性能足够
+		function(err, results) {
+		if (err){
+			console.log(err);
+			callback('null');//没人中奖
+		}
+		else if (!results || results.length == 0){
+			console.log('fuck');
+			callback('null');//没人中奖
+		}
+		else{
+			callback(results[0]['id']);
+		}
+	});
+}
+
 
 function acceptBullet(req,res){
 	if (!req.body){
@@ -64,13 +113,13 @@ function acceptBullet(req,res){
 function checkBullet (results){
 	var bullet = {
 		time: '',
-		movieid: '000000001',//保留字，视频ID，暂时定义为000000001
+		movieid: MOVIE_ID,//保留字，视频ID，暂时定义为000000001
 		content: '',
 		studentNum: ''
 	};
 
 	var timeReg = /^\d+$/;
-	var studentNumReg = /^\d{2}\w{1}\d{5}$/;
+	var studentNumReg = /^\d{9}$/;
 
 	if (!results.time || !results.movieid || !results.content ||!results.studentNum){
 		return null;
@@ -97,20 +146,30 @@ function saveBullet (bullet) {
 	var content = bullet.content;
 	var studentNum = bullet.studentNum;
 
-	var query = connection.query('INSERT INTO bullet SET time = ?,movieid = ?,content = ?,studentNum = ?',
+	connection.query('INSERT INTO bullet SET time = ?,movieid = ?,content = ?,studentNum = ?',
 		[time,movieid,content,studentNum],
 		function(err, results) {
 		if (err){
 			console.log(err);
 		}
 		else{
-			return true;//ok
+			//ok
+		}
+	});
+	connection.query('INSERT INTO user SET id = ?,count = 0 ON DUPLICATE KEY UPDATE count = count+1',
+		[studentNum],
+		function(err,results){
+		if(err){
+			console.log(err);
+		}
+		else{
+			//ok
 		}
 	});
 }
 
 function getBullet (time,callback){
-	var query = connection.query('SELECT time,movieid,content,studentNum FROM bullet WHERE time > ? ORDER BY id DESC LIMIT 10',
+	connection.query('SELECT time,movieid,content,studentNum FROM bullet WHERE time > ? ORDER BY id DESC LIMIT 10',
 		[time],//最多会取最近的10条
 		function(err,results){
 		if (err){
@@ -129,7 +188,7 @@ function getBullet (time,callback){
 
 function saveTime (uuid){
 	var time = Math.round(new Date().getTime()/1000);
-	var query = connection.query('INSERT INTO user SET uuid = ?,time = ? ON DUPLICATE KEY UPDATE uuid = ?,time = ?',
+	connection.query('INSERT INTO client SET uuid = ?,time = ? ON DUPLICATE KEY UPDATE time = ?',
 		[uuid,time,uuid,time],
 		function(err,results){
 		if (err){
@@ -143,7 +202,7 @@ function saveTime (uuid){
 
 function getTime (uuid,callback){
 	var time = Math.round(new Date().getTime()/1000);
-	var query = connection.query('SELECT time FROM user WHERE uuid = ?',
+	connection.query('SELECT time FROM client WHERE uuid = ?',
 		[uuid],
 		function(err,results){
 		if (err){
@@ -158,4 +217,5 @@ function getTime (uuid,callback){
 	});
 }
 
+exports.getLuck = getLuck;
 exports.acceptBullet = acceptBullet;
