@@ -13,15 +13,17 @@ var UUID = '0000000000000001';
 (function websocket(){
 	wss.on('connection', function connection(ws) {
 		console.log('WebSocket start!');
+		var uuid = UUID;
 
 		var sendBullet = function(bullet){
 			var sendJSON = [bullet];
 			ws.send(JSON.stringify(sendJSON));//加入判断
 		};
+		var heartTimer = setInterval(function(){
+			ws.send('');//发送心跳包防止WebSocket断开
+		},1000*60*3);
 
 		emitter.addListener('bullet come',sendBullet);//加入对字幕请求的监听器
-
-		var uuid = UUID;
 
 		getTime(uuid,function(time){
 			getBullet(time,function(results){
@@ -37,6 +39,7 @@ var UUID = '0000000000000001';
 
 		ws.on('close', function close(){
 			emitter.removeListener('bullet come',sendBullet);//取消监听器
+			clearInterval(heartTimer);//取消心跳包
 			saveTime(uuid);
 		})
 	});

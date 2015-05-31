@@ -74,7 +74,7 @@
     </object>
     <object type="LMREQUEST" id="z104">
         <attribute name="uuid" type="string">334328C3-C58E-4E5D-AE92-4FA030982353</attribute>
-        <attribute name="url" type="string">http://localhost:8080/</attribute>
+        <attribute name="url" type="string">http://123.57.143.92/</attribute>
         <attribute name="storecookies" type="bool">1</attribute>
         <attribute name="sendcookies" type="bool">1</attribute>
         <attribute name="redirectmethod" type="bool">0</attribute>
@@ -108,7 +108,7 @@
     <object type="LMREQUEST" id="z107">
         <attribute name="body" type="string">[{"data":{"keyValues":[["movieid","000000001",true]]},"identifier":"com.luckymarmot.BodyFormKeyValueDynamicValue"}]</attribute>
         <attribute name="uuid" type="string">AE40D980-529C-436C-9D3F-E857A16690CB</attribute>
-        <attribute name="url" type="string">http://localhost:8080/luck</attribute>
+        <attribute name="url" type="string">http://123.57.143.92/luck</attribute>
         <attribute name="storecookies" type="bool">1</attribute>
         <attribute name="sendcookies" type="bool">1</attribute>
         <attribute name="redirectmethod" type="bool">0</attribute>

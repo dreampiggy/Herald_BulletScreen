@@ -15,11 +15,12 @@ function sendWebSocket(){
 function sendHTTP(){
 	var time = Math.round(new Date().getTime()/1000);
 	var random = Math.floor(Math.random() * ( 100 + 1));
+	var randomCard = 100 + Math.floor(Math.random() * (999 + 1));
 	var sendJSON = {
 		time : time,
 		content : '吃我弹幕炸弹' + random + '号',
 		movieid : '000000001',
-		studentNum : '213133443'
+		studentNum : '213133' + randomCard
 	}
 	request
 		.post('http://123.57.143.92/')
