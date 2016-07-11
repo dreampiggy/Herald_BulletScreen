@@ -11,7 +11,7 @@ app.post('/', handler.acceptBullet);
 app.post('/luck',handler.getLuck);
 
 app.use(function(req, res) {
-	res,status(404).end();
+	res.status(404).end();
 });
 
 app.listen(8080);
